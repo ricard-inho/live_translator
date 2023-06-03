@@ -9,11 +9,12 @@ import asyncio
 import logging
 from datetime import datetime
 
-import whisper
 import numpy as np
 
 from starlette.websockets import WebSocket, WebSocketState
 import asyncio
+
+from model.whisper.model import WhisperModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("FastAPI app")
@@ -32,15 +33,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-async def heavy_data_processing(data: bytes):
-    """Some (fake) heavy data processing logic."""
-    audio = np.array([], dtype=np.int16)
-    buffer = np.frombuffer(data["bytes"], dtype=np.int16).astype(np.float32) / 32000
-    audio = np.concatenate([audio, buffer])
-    print("Got: at ", type(audio))
-    result = model.transcribe(audio)
-    print(result["text"])
-    return result["text"]
+    
+
 
 class ConnectionManager:
     def __init__(self) -> None:
@@ -66,16 +60,16 @@ class ConnectionManager:
                 
 manager = ConnectionManager()
 
-print("Loading whisper model...")
-model = whisper.load_model("base", download_root="/app/model/whisper/")
+w_model = WhisperModel()
 
 @app.get("/")
 async def root():
     return {"message": "Hello World. Server live."}
 
-@app.get("/loadModel")
-async def load_model(language: str, task: str):
-    message = {"message":"Loading whisper model", "language":language, "task": task}
+@app.get("/setSettings")
+async def set_settings(language: str, task: str):
+    message = await w_model.set_model_settings(language=language, task=task)
+    print(message)
     return json.dumps(message)
 
 
@@ -98,8 +92,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
             await manager.send_personal_message(json.dumps({"data":"Got it"}), websocket=websocket)
 
             try: 
-                message_processed = await heavy_data_processing(data)
-                message = {"time":current_time,"clientId":client_id,"message":message_processed}
+                message_processed = await w_model.process_audio(data)
+                message = {"time":current_time,"clientId":client_id,"message":"message_processed"}
                 await manager.send_personal_message(json.dumps(message), websocket=websocket)
             except KeyError:
                 print("Key error bytes ", data.keys())
