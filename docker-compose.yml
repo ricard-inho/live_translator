@@ -1,0 +1,33 @@
+version: "2.17"
+
+services:
+  fastapi_app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: fastapi_app:latest
+    ports:
+      - target: 8000
+        published: 8000
+    volumes:
+        - ./backend/app:/app
+    networks:
+      - websocket
+
+  frontend_app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend_app:latest
+    ports:
+      - target: 3000
+        published: 3000
+    volumes:
+        - ./frontend/app:/app
+    networks:
+        - websocket
+
+networks:
+  websocket:
+    name: websocket
+    driver: bridge

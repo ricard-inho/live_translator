@@ -1,0 +1,9 @@
+uvicorn[standard]
+fastapi
+jinja2
+python-multipart
+
+#Whisper C-API incompatibility
+numpy==1.24.3
+
+aiofiles

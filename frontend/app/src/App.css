@@ -1,0 +1,83 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.container {
+  /* Your container styles */
+}
+
+/* Other styles */
+
+.connection-status {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  /*margin: 10px;*/
+}
+
+.connected {
+  background-color: green;
+}
+
+.disconnected {
+  background-color: red;
+}
+
+.connectionContainer {
+  display: flex;
+  margin: 3%;
+  padding: 3%;
+}
+
+.chat-container {
+  width: 100%;
+  height: 50vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-textarea {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  padding: 10px;
+  box-sizing: border-box;
+  overflow-y: scroll;
+}
