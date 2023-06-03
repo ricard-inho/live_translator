@@ -41,7 +41,7 @@ function App() {
           desiredSampRate: 16000,
           recorderType: StereoAudioRecorder,
           numberOfAudioChannels: 1,
-          timeSlice: 500,
+          timeSlice: 1000,
           bufferSize: 1024,
           ondataavailable: function(blob) {
             ws.send(blob);
@@ -93,7 +93,7 @@ function App() {
   const [task, setTask] = useState("transcribe");
 
   const setSettings = () => {
-    fetch('https://0.0.0.0:8000/loadModel?language=' + language + '&task=' + task)
+    fetch('https://0.0.0.0:8000/setSettings?language=' + language + '&task=' + task)
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
@@ -122,7 +122,6 @@ function App() {
         <div className="settingsContainer">
           <header>Language</header>
           <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-            <option value="Auto">Auto</option>
             <option value="cat">Catalan</option>
             <option value="en">English</option>
             <option value="jp">Japanese</option>
