@@ -102,9 +102,10 @@ function App() {
       <div className="loadModel">
         <h2>Model Settings</h2>
         <select>
-          <option value="option1">Option 1</option>
-          <option value="option2">Option 2</option>
-          <option value="option3">Option 3</option>
+          <option value="en">English</option>
+          <option value="jp">Japanese</option>
+          <option value="sp">Spanish</option>
+          <option value="cat">Catalan</option>
         </select>
       </div>
 
