@@ -16,9 +16,8 @@ class WhisperModel():
 
     async def process_audio(self, data):
         audio = np.array([], dtype=np.int16)
-        buffer = np.frombuffer(data["bytes"], dtype=np.int16).astype(np.float32) / 32000
+        buffer = np.frombuffer(data["bytes"], dtype=np.int16).astype(np.float32) / 2**15
         audio = np.concatenate([audio, buffer])
-        print("Got: at ", type(audio))
-        result = self.model.transcribe(audio)
+        result = self.model.transcribe(audio, language=self.language, task=self.task)
         print(result["text"])
-        return result["text"]
+        return result["text"].strip()
