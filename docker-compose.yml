@@ -5,7 +5,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
     image: fastapi_app:latest
+    tty: true
+    stdin_open: true
     ports:
       - target: 8000
         published: 8000
