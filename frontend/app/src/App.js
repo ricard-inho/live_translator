@@ -21,6 +21,7 @@ function App() {
 
   const [isConnected, setConnected] = useState(false);
   const [isRecording, setRecording] = useState(false);
+  const [modelLoaded, setModelLoaded] = useState(false);
 
   useEffect(() => {
 
@@ -87,11 +88,27 @@ function App() {
     setMessages([]);
   };
 
+  //Settings
+  const [language, setLanguage] = useState("Auto");
+  const [task, setTask] = useState("transcribe");
+
+  const setSettings = () => {
+    fetch('https://0.0.0.0:8000/loadModel?language=' + language + '&task=' + task)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        setModelLoaded(true);
+      })
+      .catch((err) => {
+        console.log(err.message);
+        setModelLoaded(false);
+    });
+  }
+
   
   return (
     <div className="container">
       <h1>Live Recording</h1>
-      <h2>Your client id: {clientId} </h2>
       <div className="connectionContainer">
         <div className="rightMargin">Connection</div>
         <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}></div>
@@ -101,16 +118,30 @@ function App() {
 
       <div className="loadModel">
         <h2>Model Settings</h2>
-        <select>
-          <option value="en">English</option>
-          <option value="jp">Japanese</option>
-          <option value="sp">Spanish</option>
-          <option value="cat">Catalan</option>
-        </select>
+
+        <div className="settingsContainer">
+          <header>Language</header>
+          <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+            <option value="Auto">Auto</option>
+            <option value="cat">Catalan</option>
+            <option value="en">English</option>
+            <option value="jp">Japanese</option>
+            <option value="sp">Spanish</option>
+          </select>
+
+          <header>Task</header>
+          <select value={task} onChange={(e) => setTask(e.target.value)}>
+            <option value="transcribe">Transcribe</option>
+            <option value="translate">Translate</option>
+          </select>
+        </div>
+
+        <button onClick={setSettings}>Set Settings</button>
+
       </div>
 
-      <button onClick={startRecording} disabled={isRecording}>Start Recording</button>
-      <button onClick={stopRecording} disabled={!isRecording}>Stop Recording</button>
+      <button onClick={startRecording} disabled={!modelLoaded || isRecording}>Start Recording</button>
+      <button onClick={stopRecording} disabled={!modelLoaded || !isRecording}>Stop Recording</button>
       <button onClick={clearTextarea}>Clear Textarea</button>
 
       <div className="chat-container">
