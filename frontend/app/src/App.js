@@ -41,7 +41,7 @@ function App() {
           recorderType: StereoAudioRecorder,
           numberOfAudioChannels: 1,
           timeSlice: 500,
-          bufferSize: 16384,
+          bufferSize: 1024,
           ondataavailable: function(blob) {
             ws.send(blob);
           }
@@ -97,6 +97,15 @@ function App() {
         <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}></div>
         <div className="rightMargin">Recording</div>
         <div className={`connection-status ${isRecording ? 'connected' : 'disconnected'}`}></div>
+      </div>
+
+      <div className="loadModel">
+        <h2>Model Settings</h2>
+        <select>
+          <option value="option1">Option 1</option>
+          <option value="option2">Option 2</option>
+          <option value="option3">Option 3</option>
+        </select>
       </div>
 
       <button onClick={startRecording} disabled={isRecording}>Start Recording</button>

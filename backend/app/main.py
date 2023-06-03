@@ -32,20 +32,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-HEART_BEAT_INTERVAL = 5
-async def is_websocket_active(ws: WebSocket) -> bool:
-    if not (ws.application_state == WebSocketState.CONNECTED and ws.client_state == WebSocketState.CONNECTED):
-        return False
-    try:
-        await asyncio.wait_for(ws.send_json({'type': 'ping'}), HEART_BEAT_INTERVAL)
-        message = await asyncio.wait_for(ws.receive_json(), HEART_BEAT_INTERVAL)
-        assert message['type'] == 'pong'
-    except BaseException:  # asyncio.TimeoutError and ws.close()
-        return False
-    return True
+async def heavy_data_processing(data: bytes):
+    """Some (fake) heavy data processing logic."""
+    audio = np.array([], dtype=np.int16)
+    buffer = np.frombuffer(data["bytes"], dtype=np.int16).astype(np.float32) / 32000
+    audio = np.concatenate([audio, buffer])
+    print("Got: at ", type(audio))
+    result = model.transcribe(audio)
+    print(result["text"])
+    return result["text"]
 
 class ConnectionManager:
-
     def __init__(self) -> None:
         self.active_connections: List[WebSocket] = []
 
@@ -66,14 +63,7 @@ class ConnectionManager:
             print(connection.application_state == WebSocketState.CONNECTED)
             print(connection.client_state == WebSocketState.CONNECTED)
             await connection.send_text(message)
-        # for connection in self.active_connections:
-        #     if await is_websocket_active(connection):
-        #         await connection.send_text(message)
-        #     else:
-        #         self.disconnect(connection)
                 
-
-
 manager = ConnectionManager()
 
 print("Loading whisper model...")
@@ -83,15 +73,11 @@ model = whisper.load_model("base", download_root="/app/model/whisper/")
 async def root():
     return {"message": "Hello World. Server live."}
 
-async def heavy_data_processing(data: bytes):
-    """Some (fake) heavy data processing logic."""
-    audio = np.array([], dtype=np.int16)
-    buffer = np.frombuffer(data["bytes"], dtype=np.int16).astype(np.float32) / 32000
-    audio = np.concatenate([audio, buffer])
-    print("Got: at ", type(audio))
-    result = model.transcribe(audio)
-    print(result["text"])
-    return result["text"]
+@app.get("/loadModel")
+async def load_model(language: str, task: str):
+    message = {"message":"Loading whisper model", "language":language, "task": task}
+    return json.dumps(message)
+
 
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
