@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc';
 
+import AudioWorker from './AudioWorker.js';
+
 function App() {
   // add random cliend id by date time
   const [clientId, setClientId] = useState(
@@ -14,8 +16,8 @@ function App() {
   const [messages, setMessages] = useState([]);
 
   
-  const recorder = useRef(null);
-  const stream = useRef(null);
+  //const recorder = useRef(null);
+  //const stream = useRef(null);
 
   const [websckt, setWebsckt] = useState();
 
@@ -33,21 +35,21 @@ function App() {
       ws.send('Connect');
 
 
-      stream.current =navigator.mediaDevices.getUserMedia({video: false, audio: true}).then( stream => {
-        recorder.current = RecordRTC(stream, {
-          type: 'audio',
-          mimeType: 'audio/webm',
-          sampleRate: 44100,
-          desiredSampRate: 16000,
-          recorderType: StereoAudioRecorder,
-          numberOfAudioChannels: 1,
-          timeSlice: 1000,
-          bufferSize: 1024,
-          ondataavailable: function(blob) {
-            ws.send(blob);
-          }
-        });
-      })
+      // stream.current =navigator.mediaDevices.getUserMedia({video: false, audio: true}).then( stream => {
+      //   recorder.current = RecordRTC(stream, {
+      //     type: 'audio',
+      //     mimeType: 'audio/webm',
+      //     sampleRate: 44100,
+      //     desiredSampRate: 16000,
+      //     recorderType: StereoAudioRecorder,
+      //     numberOfAudioChannels: 1,
+      //     timeSlice: 1000,
+      //     bufferSize: 1024,
+      //     ondataavailable: function(blob) {
+      //       ws.send(blob);
+      //     }
+      //   });
+      // })
 
     };
 
@@ -65,16 +67,16 @@ function App() {
     };
   }, []);
 
-  const startRecording = () => {
-    recorder.current.startRecording();
-    setRecording(true)
-  };
+  // const startRecording = () => {
+  //   recorder.current.startRecording();
+  //   setRecording(true)
+  // };
 
-  const stopRecording = () => {
-    recorder.current.stopRecording();
-    recorder.current.reset();
-    setRecording(false)
-  }
+  // const stopRecording = () => {
+  //   recorder.current.stopRecording();
+  //   recorder.current.reset();
+  //   setRecording(false)
+  // }
 
   //Text Area
   const textareaRef = useRef(null);
@@ -91,6 +93,35 @@ function App() {
   //Settings
   const [language, setLanguage] = useState("Auto");
   const [task, setTask] = useState("transcribe");
+
+  //New Microphone
+  const audioRef = useRef(null);
+  const [audioChunks, setAudioChunks] = useState([]);
+  useEffect(() => {
+    let worker;
+
+    const startWorker = () => {
+      worker = AudioWorker();
+      worker.addEventListener('message', (event) => {
+        const newChunks = event.data;
+
+        if (newChunks.length > 0) {
+          console.log("Sending new audio")
+          setAudioChunks((prevChunks) => [...prevChunks, ...newChunks]);
+        }
+      });
+    };
+
+    const stopWorker = () => {
+      worker.postMessage('stop');
+    };
+
+    startWorker();
+
+    return () => {
+      stopWorker();
+    };
+  }, []);
 
   const setSettings = () => {
     fetch('https://0.0.0.0:8000/setSettings?language=' + language + '&task=' + task)
@@ -139,8 +170,8 @@ function App() {
 
       </div>
 
-      <button onClick={startRecording} disabled={!modelLoaded || isRecording}>Start Recording</button>
-      <button onClick={stopRecording} disabled={!modelLoaded || !isRecording}>Stop Recording</button>
+      {/* <button onClick={startRecording} disabled={!modelLoaded || isRecording}>Start Recording</button>
+      <button onClick={stopRecording} disabled={!modelLoaded || !isRecording}>Stop Recording</button> */}
       <button onClick={clearTextarea}>Clear Textarea</button>
 
       <div className="chat-container">

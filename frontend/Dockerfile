@@ -2,6 +2,7 @@
 FROM node:14-alpine
 
 RUN npm install --save recordrtc
+RUN npm install worker-loader
 
 WORKDIR /app
 
