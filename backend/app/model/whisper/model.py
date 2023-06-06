@@ -2,7 +2,7 @@ import whisper
 import numpy as np
 
 class WhisperModel():
-    def __init__(self, model_type="base"):
+    def __init__(self, model_type="large"):
         print("loading whisper")
         self.model = whisper.load_model(model_type, download_root="/app/model/whisper/")
         self.language = 'en'
