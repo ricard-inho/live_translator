@@ -93,7 +93,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
 
             try: 
                 message_processed = await w_model.process_audio(data)
-                message = {"time":current_time,"clientId":client_id,"message":"message_processed"}
+                message = {"time":current_time,"clientId":client_id,"message":message_processed}
                 await manager.send_personal_message(json.dumps(message), websocket=websocket)
             except KeyError:
                 print("Key error bytes ", data.keys())
