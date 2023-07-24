@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc';
 
-import AudioWorker from './AudioWorker.js';
+
 
 function App() {
   // add random cliend id by date time
@@ -16,40 +16,44 @@ function App() {
   const [messages, setMessages] = useState([]);
 
   
-  //const recorder = useRef(null);
-  //const stream = useRef(null);
-
-  const [websckt, setWebsckt] = useState();
+  const recorder = useRef(null);
+  const stream = useRef(null);
 
   const [isConnected, setConnected] = useState(false);
   const [isRecording, setRecording] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
 
+  //const [audioChunks, setAudioChunks] = useState([]);
+
+
+
   useEffect(() => {
 
     const url = 'wss://0.0.0.0:8000/ws/' + clientId;
     const ws = new WebSocket(url);
+    
 
     ws.onopen = () => {
       setConnected(true);
       ws.send('Connect');
 
 
-      // stream.current =navigator.mediaDevices.getUserMedia({video: false, audio: true}).then( stream => {
-      //   recorder.current = RecordRTC(stream, {
-      //     type: 'audio',
-      //     mimeType: 'audio/webm',
-      //     sampleRate: 44100,
-      //     desiredSampRate: 16000,
-      //     recorderType: StereoAudioRecorder,
-      //     numberOfAudioChannels: 1,
-      //     timeSlice: 1000,
-      //     bufferSize: 1024,
-      //     ondataavailable: function(blob) {
-      //       ws.send(blob);
-      //     }
-      //   });
-      // })
+      stream.current =navigator.mediaDevices.getUserMedia({video: false, audio: true}).then( stream => {
+        
+        recorder.current = RecordRTC(stream, {
+          type: 'audio',
+          mimeType: 'audio/webm',
+          sampleRate: 44100, //22050
+          desiredSampRate: 44100,
+          recorderType: StereoAudioRecorder,
+          numberOfAudioChannels: 1,
+          timeSlice: 100,
+          bufferSize: 8192, //2048
+          ondataavailable: function(blob) {
+            ws.send(blob);
+          }
+        });
+      })
 
     };
 
@@ -60,23 +64,22 @@ function App() {
     };
     
 
-    setWebsckt(ws);
-
     return () => {
         ws.close();
     };
   }, []);
 
-  // const startRecording = () => {
-  //   recorder.current.startRecording();
-  //   setRecording(true)
-  // };
+  const startRecording = async () => {
+    recorder.current.startRecording();
 
-  // const stopRecording = () => {
-  //   recorder.current.stopRecording();
-  //   recorder.current.reset();
-  //   setRecording(false)
-  // }
+    setRecording(true)
+  };
+
+  const stopRecording = () => {
+    recorder.current.stopRecording();
+    recorder.current.reset();
+    setRecording(false)
+  }
 
   //Text Area
   const textareaRef = useRef(null);
@@ -93,36 +96,6 @@ function App() {
   //Settings
   const [language, setLanguage] = useState("Auto");
   const [task, setTask] = useState("transcribe");
-
-  //New Microphone
-  const audioRef = useRef(null);
-  const [audioChunks, setAudioChunks] = useState([]);
-  useEffect(() => {
-    let worker;
-
-    const startWorker = () => {
-      worker = AudioWorker();
-      worker.addEventListener('message', (event) => {
-        const newChunks = event.data;
-
-        if (newChunks.length > 0) {
-          console.log("Sending new audio")
-          setAudioChunks((prevChunks) => [...prevChunks, ...newChunks]);
-        }
-      });
-    };
-
-    const stopWorker = () => {
-      worker.postMessage('stop');
-    };
-
-    startWorker();
-
-    return () => {
-      stopWorker();
-    };
-  }, []);
-
   const setSettings = () => {
     fetch('https://0.0.0.0:8000/setSettings?language=' + language + '&task=' + task)
       .then((res) => res.json())
@@ -135,11 +108,11 @@ function App() {
         setModelLoaded(false);
     });
   }
-
+  
   
   return (
     <div className="container">
-      <h1>Live Recording</h1>
+      <h1>LR</h1>
       <div className="connectionContainer">
         <div className="rightMargin">Connection</div>
         <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}></div>
@@ -170,8 +143,8 @@ function App() {
 
       </div>
 
-      {/* <button onClick={startRecording} disabled={!modelLoaded || isRecording}>Start Recording</button>
-      <button onClick={stopRecording} disabled={!modelLoaded || !isRecording}>Stop Recording</button> */}
+      <button onClick={startRecording} disabled={!modelLoaded || isRecording}>Start Recording</button>
+      <button onClick={stopRecording} disabled={!modelLoaded || !isRecording}>Stop Recording</button>
       <button onClick={clearTextarea}>Clear Textarea</button>
 
       <div className="chat-container">
@@ -183,3 +156,75 @@ function App() {
 }
 
 export default App;
+
+//########################################
+// import React, { useEffect, useState } from 'react';
+
+// const SpeechToText = () => {
+//   const [isListening, setIsListening] = useState(false);
+//   const [recognizedText, setRecognizedText] = useState('');
+
+//   useEffect(() => {
+//     let recognition = null;
+
+//     const handleSpeechRecognition = (event) => {
+//       console.log("called2")
+//       const transcript = event.results[0][0].transcript;
+//       setRecognizedText(transcript);
+//     };
+
+//     const startSpeechRecognition = (stream) => {
+//       // Create a SpeechRecognition instance
+//       recognition = new window.webkitSpeechRecognition();
+//       recognition.continuous = true;
+//       recognition.interimResults = true;
+//       recognition.lang = 'en-US';
+
+//       // Start speech recognition
+//       recognition.start();
+
+//       // Event handler when speech is recognized
+//       recognition.onresult = handleSpeechRecognition;
+//     };
+
+//     const initializeSpeechRecognition = async () => {
+//       try {
+//         // Request user permission for microphone access
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         startSpeechRecognition(stream);
+//       } catch (error) {
+//         console.error('Error accessing microphone:', error);
+//       }
+//     };
+
+//     if (isListening) {
+//       initializeSpeechRecognition();
+//     } else {
+//       if (recognition) {
+//         recognition.stop();
+//         recognition = null;
+//       }
+//     }
+
+//     // Cleanup function
+//     return () => {
+//       if (recognition) {
+//         recognition.stop();
+//         recognition = null;
+//       }
+//     };
+//   }, [isListening]);
+
+//   const toggleListening = () => {
+//     setIsListening(!isListening);
+//   };
+
+//   return (
+//     <div>
+//       <button onClick={toggleListening}>{isListening ? 'Stop Listening' : 'Start Listening'}</button>
+//       <p>Recognized Text: {recognizedText}</p>
+//     </div>
+//   );
+// };
+
+// export default SpeechToText;
